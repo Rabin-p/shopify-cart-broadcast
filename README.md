@@ -39,10 +39,6 @@ Add this to your theme's `theme.liquid`, just before `</head>`:
 <script src="https://cdn.jsdelivr.net/npm/shopify-cart-broadcast@1.0.0/events-broadcast.min.js"></script>
 ```
 
-> **Pin the version** (`@1`, or better `@1.0.0`) — never ship `@latest` to a live store.
-> For production, prefer **self-hosting** (download the file into your theme assets) so a
-> third-party CDN is never a single point of failure for checkout.
-
 ### Option B — npm
 
 ```bash
