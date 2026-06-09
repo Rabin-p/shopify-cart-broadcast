@@ -5,15 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shopify Cart Broadcaster — Demo</title>
   <style>
-    body { font: 15px/1.5 system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; color: #1a1a1a; }
-    h1 { font-size: 1.4rem; }
-    h2 { font-size: 1.1rem; margin-top: 2rem; }
+    body { font: 15px/1.5 system-ui, sans-serif; max-width: 720px; margin: 32px auto; padding: 0 16px; color: #1a1a1a; }
+    h1 { font-size: 1.4rem; margin-bottom: .2rem; }
+    h2 { font-size: 1.05rem; margin-top: 1.8rem; }
     button { font: inherit; padding: 8px 14px; border: 1px solid #007ace; background: #007ace; color: #fff; border-radius: 6px; cursor: pointer; }
     button.secondary { background: #fff; color: #007ace; }
     .bar { height: 12px; background: #eee; border-radius: 99px; overflow: hidden; margin: 8px 0; }
-    .bar > span { display: block; height: 100%; width: 0; background: #27ae60; transition: width .3s; }
+    .bar > span { display: block; height: 100%; width: 0; background: #27ae60; transition: width .35s ease; }
     .note { color: #666; font-size: .9rem; }
     code { background: #f0f0f0; padding: 1px 5px; border-radius: 4px; }
+    /* Live event feed */
+    #feed { list-style: none; padding: 0; margin: 8px 0 0; font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    #feed li { display: flex; align-items: center; gap: 10px; padding: 7px 12px; margin: 6px 0; border-radius: 6px;
+               background: #0d1117; color: #c9d1d9; border-left: 5px solid #555; animation: pop .25s ease; }
+    #feed .tag { font-weight: 700; color: #fff; }
+    #feed .det { color: #8b949e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    @keyframes pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
   </style>
 
   <!--
@@ -49,41 +56,53 @@
   <script src="./events-broadcast.js"></script>
 </head>
 <body>
-  <h1>🛒 Shopify Cart Broadcaster — Demo</h1>
+  <h1>🛒 Shopify Cart Broadcaster</h1>
   <p class="note">
-    Open your browser console, then click the buttons. The Cart API here is
-    <strong>faked</strong> for the demo — on a real Shopify store the same events fire
-    automatically when your theme or apps hit the cart.
+    Click the buttons — every Shopify cart call becomes a clean DOM event, shown live below
+    (and in your console). The Cart API here is <strong>faked</strong> so the page works without a store.
   </p>
 
   <p>
-    <button onclick="fetch('/cart/add.js', { method: 'POST', body: JSON.stringify({ id: 1, quantity: 1 }) })">
-      POST /cart/add
+    <button id="btn-add" onclick="fetch('/cart/add.js', { method: 'POST', body: JSON.stringify({ id: 1, quantity: 1 }) })">
+      Add to cart
     </button>
-    <button class="secondary" onclick="fetch('/cart.js')">GET /cart.js</button>
+    <button class="secondary" id="btn-fetch" onclick="fetch('/cart.js')">Fetch cart</button>
   </p>
 
-  <h2>Free-shipping bar (real use-case)</h2>
-  <p class="note">Listens to <code>shopify:cart-updated</code> — no polling, no theme hooks.</p>
+  <h2>Free-shipping bar <span class="note">— listens to <code>shopify:cart-updated</code></span></h2>
   <div class="bar"><span id="ship-fill"></span></div>
   <p id="ship-text">Add items to unlock free shipping.</p>
 
+  <h2>Live event feed</h2>
+  <ul id="feed"></ul>
+
   <!-- 3. Your code just listens. -->
   <script>
+    const feed = document.getElementById('feed');
     const logStyle = 'color:#fff;padding:4px 8px;font-weight:bold;border-radius:3px;';
-    const log = (label, bg, detail) =>
-      console.log(`%c${label}`, `background:${bg};${logStyle}`, detail);
 
-    addEventListener('shopify:cart-added',   e => log('📥 Item Added',   '#007ace', e.detail));
-    addEventListener('shopify:cart-changed', e => log('🔄 Item Changed', '#e67e22', e.detail));
-    addEventListener('shopify:cart-cleared', e => log('🗑️ Cart Cleared', '#e74c3c', e.detail));
-    addEventListener('shopify:cart-fetched', e => log('🔍 Cart Fetched', '#9b59b6', e.detail.cart));
-    addEventListener('shopify:cart-error',   e => log('⚠️ Cart Error',   '#c0392b', e.detail));
+    // Mirror every event to (a) the console and (b) the on-page feed.
+    function show(label, color, detail) {
+      console.log(`%c${label}`, `background:${color};${logStyle}`, detail);
+      const li = document.createElement('li');
+      li.style.borderLeftColor = color;
+      const summary = detail.cart
+        ? `cart.total_price = ${detail.cart.total_price}¢`
+        : JSON.stringify(detail);
+      li.innerHTML = `<span class="tag">${label}</span><span class="det">${summary}</span>`;
+      feed.prepend(li);
+    }
+
+    addEventListener('shopify:cart-added',   e => show('shopify:cart-added',   '#007ace', e.detail));
+    addEventListener('shopify:cart-changed', e => show('shopify:cart-changed', '#e67e22', e.detail));
+    addEventListener('shopify:cart-cleared', e => show('shopify:cart-cleared', '#e74c3c', e.detail));
+    addEventListener('shopify:cart-fetched', e => show('shopify:cart-fetched', '#9b59b6', e.detail));
+    addEventListener('shopify:cart-error',   e => show('shopify:cart-error',   '#c0392b', e.detail));
 
     // The "master" event fires after ANY cart mutation — ideal for UI sync.
     const THRESHOLD = 5000; // $50.00 in cents
     addEventListener('shopify:cart-updated', (e) => {
-      log('🛒 Master Update', '#27ae60', e.detail.cart);
+      show('shopify:cart-updated', '#27ae60', e.detail);
       const total = e.detail.cart?.total_price ?? 0;
       const pct = Math.min(100, (total / THRESHOLD) * 100);
       document.getElementById('ship-fill').style.width = pct + '%';
@@ -92,6 +111,14 @@
           ? '✅ You unlocked free shipping!'
           : `$${((THRESHOLD - total) / 100).toFixed(2)} away from free shipping.`;
     });
+
+    // Capture/automation hook — only active with ?capture in the URL (used to record the demo GIF).
+    if (location.search.includes('capture')) {
+      window.__demo = {
+        add:   () => document.getElementById('btn-add').click(),
+        fetch: () => document.getElementById('btn-fetch').click(),
+      };
+    }
   </script>
 </body>
 </html>

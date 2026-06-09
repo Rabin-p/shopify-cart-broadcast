@@ -8,6 +8,10 @@
 
 **Reliable cart events for any Shopify theme — in one `<script>` tag.**
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Rabin-p/shopify-cart-broadcast/main/media/demo.gif" alt="Adding to cart fires shopify:cart-added and shopify:cart-updated DOM events in real time, driving a live free-shipping bar" width="660">
+</p>
+
 Shopify themes don't emit consistent, trustworthy cart events. So everyone building a
 cart drawer, free-shipping bar, upsell widget, or analytics hook ends up monkey-patching
 `window.fetch` by hand — and missing the requests that go through `XMLHttpRequest`.
