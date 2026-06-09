@@ -1,0 +1,46 @@
+{
+  "name": "shopify-cart-broadcast",
+  "version": "1.0.0",
+  "description": "Reliable cart events for any Shopify theme. Intercepts the Fetch & XHR Cart APIs and re-broadcasts them as clean DOM CustomEvents.",
+  "main": "events-broadcast.js",
+  "module": "events-broadcast.js",
+  "unpkg": "events-broadcast.js",
+  "jsdelivr": "events-broadcast.js",
+  "type": "module",
+  "sideEffects": true,
+  "files": [
+    "events-broadcast.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "terser events-broadcast.js -c -m -o events-broadcast.min.js",
+    "demo": "npx serve ."
+  },
+  "keywords": [
+    "shopify",
+    "cart",
+    "events",
+    "ajax-cart",
+    "cart-api",
+    "customevent",
+    "fetch",
+    "xhr",
+    "ecommerce",
+    "theme",
+    "storefront"
+  ],
+  "homepage": "https://github.com/Rabin-p/shopify-cart-broadcast#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rabin-p/shopify-cart-broadcast.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Rabin-p/shopify-cart-broadcast/issues"
+  },
+  "author": "Rabin-p",
+  "license": "MIT",
+  "devDependencies": {
+    "terser": "^5.0.0"
+  }
+}

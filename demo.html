@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shopify Cart Broadcaster — Demo</title>
+  <style>
+    body { font: 15px/1.5 system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; color: #1a1a1a; }
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1.1rem; margin-top: 2rem; }
+    button { font: inherit; padding: 8px 14px; border: 1px solid #007ace; background: #007ace; color: #fff; border-radius: 6px; cursor: pointer; }
+    button.secondary { background: #fff; color: #007ace; }
+    .bar { height: 12px; background: #eee; border-radius: 99px; overflow: hidden; margin: 8px 0; }
+    .bar > span { display: block; height: 100%; width: 0; background: #27ae60; transition: width .3s; }
+    .note { color: #666; font-size: .9rem; }
+    code { background: #f0f0f0; padding: 1px 5px; border-radius: 4px; }
+  </style>
+
+  <!--
+    ORDER MATTERS:
+    1. Install a fake Cart API as the network layer (DEMO ONLY).
+    2. Load the broadcaster — it wraps whatever fetch exists now.
+    3. Your listeners run.
+    On a real store you skip step 1; the broadcaster wraps the browser's real fetch.
+  -->
+
+  <!-- 1. DEMO ONLY: fake Shopify's Cart API so this page works without a store. -->
+  <script>
+    let cartTotal = 0; // cents
+    const realFetch = window.fetch.bind(window);
+    window.fetch = (url, opts) => {
+      const u = String(url);
+      if (u.includes('/cart/add')) {
+        cartTotal += 2000;
+        const added = [{ id: 1, title: 'Demo Tee', quantity: 1, price: 2000 }];
+        return jsonResponse(added);
+      }
+      if (u.includes('/cart.js')) {
+        return jsonResponse({ item_count: cartTotal / 2000, total_price: cartTotal, items: [] });
+      }
+      return realFetch(url, opts);
+    };
+    const jsonResponse = (body) => Promise.resolve(
+      new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } })
+    );
+  </script>
+
+  <!-- 2. Load the broadcaster (wraps the fetch above). In production: CDN or self-host. -->
+  <script src="./events-broadcast.js"></script>
+</head>
+<body>
+  <h1>🛒 Shopify Cart Broadcaster — Demo</h1>
+  <p class="note">
+    Open your browser console, then click the buttons. The Cart API here is
+    <strong>faked</strong> for the demo — on a real Shopify store the same events fire
+    automatically when your theme or apps hit the cart.
+  </p>
+
+  <p>
+    <button onclick="fetch('/cart/add.js', { method: 'POST', body: JSON.stringify({ id: 1, quantity: 1 }) })">
+      POST /cart/add
+    </button>
+    <button class="secondary" onclick="fetch('/cart.js')">GET /cart.js</button>
+  </p>
+
+  <h2>Free-shipping bar (real use-case)</h2>
+  <p class="note">Listens to <code>shopify:cart-updated</code> — no polling, no theme hooks.</p>
+  <div class="bar"><span id="ship-fill"></span></div>
+  <p id="ship-text">Add items to unlock free shipping.</p>
+
+  <!-- 3. Your code just listens. -->
+  <script>
+    const logStyle = 'color:#fff;padding:4px 8px;font-weight:bold;border-radius:3px;';
+    const log = (label, bg, detail) =>
+      console.log(`%c${label}`, `background:${bg};${logStyle}`, detail);
+
+    addEventListener('shopify:cart-added',   e => log('📥 Item Added',   '#007ace', e.detail));
+    addEventListener('shopify:cart-changed', e => log('🔄 Item Changed', '#e67e22', e.detail));
+    addEventListener('shopify:cart-cleared', e => log('🗑️ Cart Cleared', '#e74c3c', e.detail));
+    addEventListener('shopify:cart-fetched', e => log('🔍 Cart Fetched', '#9b59b6', e.detail.cart));
+    addEventListener('shopify:cart-error',   e => log('⚠️ Cart Error',   '#c0392b', e.detail));
+
+    // The "master" event fires after ANY cart mutation — ideal for UI sync.
+    const THRESHOLD = 5000; // $50.00 in cents
+    addEventListener('shopify:cart-updated', (e) => {
+      log('🛒 Master Update', '#27ae60', e.detail.cart);
+      const total = e.detail.cart?.total_price ?? 0;
+      const pct = Math.min(100, (total / THRESHOLD) * 100);
+      document.getElementById('ship-fill').style.width = pct + '%';
+      document.getElementById('ship-text').textContent =
+        total >= THRESHOLD
+          ? '✅ You unlocked free shipping!'
+          : `$${((THRESHOLD - total) / 100).toFixed(2)} away from free shipping.`;
+    });
+  </script>
+</body>
+</html>
