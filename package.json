@@ -1,6 +1,6 @@
 {
   "name": "shopify-cart-broadcast",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Reliable cart events for any Shopify theme. Intercepts the Fetch & XHR Cart APIs and re-broadcasts them as clean DOM CustomEvents.",
   "main": "events-broadcast.js",
   "module": "events-broadcast.js",
