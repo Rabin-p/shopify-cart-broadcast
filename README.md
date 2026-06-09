@@ -1,5 +1,11 @@
 # 🛒 Shopify Cart Broadcaster
 
+[![npm version](https://img.shields.io/npm/v/shopify-cart-broadcast.svg)](https://www.npmjs.com/package/shopify-cart-broadcast)
+[![npm downloads](https://img.shields.io/npm/dm/shopify-cart-broadcast.svg)](https://www.npmjs.com/package/shopify-cart-broadcast)
+[![minzipped size](https://img.shields.io/bundlephobia/minzip/shopify-cart-broadcast.svg)](https://bundlephobia.com/package/shopify-cart-broadcast)
+[![jsDelivr hits](https://img.shields.io/jsdelivr/npm/hm/shopify-cart-broadcast.svg)](https://www.jsdelivr.com/package/npm/shopify-cart-broadcast)
+[![license](https://img.shields.io/npm/l/shopify-cart-broadcast.svg)](./LICENSE)
+
 **Reliable cart events for any Shopify theme — in one `<script>` tag.**
 
 Shopify themes don't emit consistent, trustworthy cart events. So everyone building a
